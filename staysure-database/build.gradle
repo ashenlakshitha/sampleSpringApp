@@ -1,0 +1,20 @@
+version 'unspecified'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.7
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile("org.liquibase:liquibase-core:${liquibase_core_version}") {
+        exclude(module: "jetty-servlet")
+    }
+    testCompile "com.mattbertolini:liquibase-slf4j:${liquibase_slf4j_version}"
+    compile group: 'org.hibernate', name: 'hibernate-entitymanager', version: '4.3.11.Final'
+    compile group: 'org.hibernate', name: 'hibernate-ehcache', version: '4.3.11.Final'
+    compile group: 'org.springframework.data', name: 'spring-data-jpa', version: '1.10.2.RELEASE'
+    compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.38'
+}

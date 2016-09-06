@@ -1,0 +1,24 @@
+version 'unspecified'
+
+apply plugin: 'java'
+apply plugin: 'war'
+
+sourceCompatibility = 1.7
+
+repositories {
+    flatDir {
+        dirs '../resources/myaccount-libs'
+    }
+    mavenCentral()
+    maven { url "http://repo.maven.apache.org/maven2" }
+}
+
+dependencies {
+    compile group: 'org.springframework', name: 'spring-context-support', version:'4.2.2.RELEASE'
+    compile group: 'org.springframework', name: 'spring-webmvc', version:'4.2.2.RELEASE'
+    compile group: 'org.thymeleaf', name: 'thymeleaf', version:'3.0.0.RELEASE'
+    compile group: 'org.thymeleaf', name: 'thymeleaf-spring4', version:'3.0.0.RELEASE'
+    providedCompile group: 'javax', name: 'javaee-web-api', version:'7.0'
+    compile project(':staysure-api')
+    compile name: 'ojdbc6-12.1.0.2'
+}

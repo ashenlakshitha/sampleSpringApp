@@ -1,0 +1,197 @@
+apply plugin: "eclipse"
+apply plugin: "idea"
+apply plugin: "java"
+
+configure(subprojects - project(":hub") - project(":sts-document-api")- project(":staysure-api")- project(":staysure-database")- project(":staysure-web")- project(":staysure-aggregator")) {
+    apply plugin: "java"
+    apply plugin: "eclipse"
+    apply plugin: "idea"
+    apply plugin: "war"
+    apply from: "$rootProject.projectDir/version.properties"
+
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+
+    repositories {
+        flatDir {
+            dirs '../resources/myaccount-libs'
+        }
+        mavenLocal()
+        if (!project.hasProperty("repo.colombo.skip")) {
+            maven { url "http://artifactory.intervest.lk/artifactory/plugins-release" }
+        }
+        mavenCentral()
+    }
+
+    dependencies {
+        compile "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
+        compile ("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}"){
+            exclude(module : "spring-web")
+            exclude(module : "spring-webmvc")
+        }
+        compile "org.springframework:spring-web:${spring_version}"
+        compile "org.springframework:spring-webmvc:${spring_version}"
+        compile("org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"){
+            exclude(module:"org.thymeleaf » thymeleaf-spring4")
+        }
+        compile "org.thymeleaf:thymeleaf-spring4:${thymeleaf_version}"
+        compile "org.springframework.boot:spring-boot-starter-velocity:${spring_boot_version}"
+        compile "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
+        compile "org.springframework.security:spring-security-web:${spring_security_version}"
+        compile "org.springframework.security:spring-security-config:${spring_security_version}"
+        compile "org.springframework.security:spring-security-data:${spring_security_version}"
+
+        compile "org.hibernate:hibernate-envers:${hibernate_version}"
+        compile "org.hibernate:hibernate-core:${hibernate_version}"
+        compile("org.hibernate:hibernate-ehcache:${hibernate_version}") {
+            exclude(module: "ehcache-core")
+        }
+
+        compile "net.sf.ehcache:ehcache:${ehcache_version}"
+        compile "com.fasterxml.jackson.datatype:jackson-datatype-joda:${jackson_version}"
+        compile "com.fasterxml.jackson.datatype:jackson-datatype-hibernate4:${jackson_version}"
+        providedRuntime "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
+        compile "org.jadira.usertype:usertype.core:${usertype_core_version}"
+        compile "com.zaxxer:HikariCP:${hikaricp_version}"
+        compile name: "ojdbc6-${oracle_version}"
+        compile "mysql:mysql-connector-java:${mysql_version}"
+        compile "org.quartz-scheduler:quartz:${quartz_version}"
+        providedCompile "javax.mail:mail:${javax_mail_version}"
+        providedCompile "javax.servlet:javax.servlet-api:${javax_servlet_version}"
+        compile "javax.inject:javax.inject:${javax_inject_version}"
+        compile "javax.servlet:jstl:${javax_jstl_version}"
+        compile "org.thymeleaf.extras:thymeleaf-extras-springsecurity4:${thymeleaf_version}"
+        compile "commons-codec:commons-codec:${commons_codec_version}"
+        compile "joda-time:joda-time:${joda_time_version}"
+
+        testCompile "io.gatling.highcharts:gatling-charts-highcharts:${gatling_version}"
+        testCompile "com.jayway.awaitility:awaitility:${awaility_version}"
+        testCompile "junit:junit:${junit_version}"
+        testCompile "org.mockito:mockito-all:${mockito_version}"
+        testCompile "org.assertj:assertj-core:${assertj_core_version}"
+        testCompile "org.springframework.security:spring-security-test:${spring_security_test}"
+        testCompile "org.springframework:spring-test:${spring_version}"
+        testCompile "com.h2database:h2:${h2_version}"
+        testCompile "org.hamcrest:hamcrest-library"
+    }
+
+    configurations {
+        all*.exclude group: "org.apache.struts"
+        all*.exclude group: "commons-logging"
+        all*.exclude module: "tomcat-jdbc"
+        all*.exclude module: "tomcat-juli"
+    }
+
+    test {
+        maxHeapSize = "1024m"
+        jvmArgs "-XX:MaxPermSize=512m"
+    }
+}
+
+repositories {
+    flatDir {
+        dirs 'resources/myaccount-libs'
+    }
+    mavenLocal()
+    if (!project.hasProperty("repo.colombo.skip")) {
+        maven { url "http://artifactory.intervest.lk/artifactory/plugins-release" }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    compile "mysql:mysql-connector-java:${mysql_version}"
+    compile name: "ojdbc6-${oracle_version}"
+}
+
+task dropTables << {
+
+    // Comment this line if you want to run this task. Added this condition to make sure no one will run this accidently.
+    throw new GradleException("Are you sure to drop tables? Double check db properties and remove this line to execute task");
+
+    def tempFile = 'build/tmp/db/drop_tables.sql'
+    def sqlFile = project.projectDir.path + '/sql/drop_tables.sql'
+    ant.copy(file: sqlFile, tofile: tempFile)
+    ant.replace(file: tempFile, token: '@TABLE_SPACES@', value: table_spaces)
+    ant.replace(file: tempFile, token: '@DB_USER@', value: dbUser)
+    ant.sql(driver: dbDriver,
+            url: dbUrl,
+            userid: dbUser,
+            password: dbUserPassword,
+            encoding: "UTF-8",
+            classpath: configurations.compile.asPath,
+            onerror: "continue", keepformat: "yes", rdbms: "oracle",
+            delimiter: "/",
+            delimitertype: "row") {
+        fileset(file: tempFile)
+    }
+}
+
+task initData << {
+
+    // Comment this line if you want to run this task. Added this condition to make sure no one will run this accidently.
+    throw new GradleException("Are you sure to load sample data? Double check db properties and remove this line to execute task");
+
+    if (project.hasProperty("prod")) {
+        initOracleData()
+    } else {
+        println 'This task is for inserting initial data for oracle. please configure for relevant db in gradle property file, then run in prod mode'
+    }
+}
+
+
+def initOracleData() {
+    def sqlFile = project.projectDir.path + '/sql/initialOracleData.sql'
+    runSql(dbDriver, dbUrl, dbUser, dbUserPassword, sqlFile)
+}
+
+def runSql(driver, url, user, password, file) {
+    println 'runSql'
+    println 'executing sql file: ' + file
+    ant.sql(driver: driver,
+            url: url,
+            userid: user,
+            password: password,
+            encoding: 'UTF-8',
+            classpath: configurations.compile.asPath,
+            onerror: 'continue') {
+        fileset(file: file)
+    }
+}
+
+task review << {
+
+    // Comment this line if you want to run this task. Added this condition to make sure no one will run this accidently.
+    throw new GradleException("Are you sure to add table auditing? Double check db properties and remove this line to execute task");
+
+    def sqlFile = project.projectDir.path + '/sql/audit.sql'
+    if (project.hasProperty("prod")) {
+        ant.sql(driver: dbDriver,
+                url: dbUrl,
+                userid: dbUser,
+                password: dbUserPassword,
+                encoding: "UTF-8",
+                classpath: configurations.compile.asPath,
+                onerror: "continue", keepformat: "yes", rdbms: "oracle",
+                delimiter: "/",
+                delimitertype: "row") {
+            fileset(file: sqlFile)
+        }
+    } else {
+        println 'This task is for reviewing in oracle. please run in prod mode'
+    }
+
+}
+
+task dropEventTableData << {
+
+    // Comment this line if you want to run this task. Added this condition to make sure no one will run this accidently.
+    throw new GradleException("Are you sure to drop data related to individual contact in event table? Double check db properties and remove this line to execute task");
+    if (project.hasProperty("prod")) {
+        def sqlStatementFile = project.projectDir.path + '/sql/drop_event_data.sql'
+        runSql(dbDriver, dbUrl, dbUser, dbUserPassword, sqlStatementFile)
+    } else {
+        println 'This task is for drop existing data in event table for oracle. you cannot execute this task in dev mode'
+    }
+
+}

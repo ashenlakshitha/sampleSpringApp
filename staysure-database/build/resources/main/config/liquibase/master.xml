@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <!-- TODO remove this test schema after table setup is done -->
+    <include file="classpath:config/liquibase/changelog/test_schema.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/staysure_schema.xml" relativeToChangelogFile="false"/>
+
+</databaseChangeLog>
+

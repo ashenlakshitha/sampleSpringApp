@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Home</title>
+</head>
+<body>
+<h1>
+    <span>Hello User</span>
+</h1>
+<table>
+    <thead>
+    <tr>
+        <th class="col-md-2">Status</th>
+        <th class="col-md-3">Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="quote : ${allQuotes}">
+        <td>
+            <span th:text="${quote.status}"></span>
+        </td>
+        <td>
+            <span th:text="${quote.description}"></span>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

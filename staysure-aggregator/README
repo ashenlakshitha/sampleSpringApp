@@ -1,0 +1,36 @@
+--------------------------------------------------------------------------------------------------
+Steps to set up the development environment, build and deploy the staysure-aggregator.war to jboss
+--------------------------------------------------------------------------------------------------
+
+Creating db user
+--------------------------------
+	Make sure you have installed mysql 5.5 or later version of it
+	Log in as root to mysql server 
+		mysql -uroot -ppassword
+	Create intertrav user
+		CREATE USER intertrav@localhost IDENTIFIED BY 'password';
+	Grant all privileges to intertrav user
+		GRANT ALL PRIVILEGES ON * . * TO intertrav@localhost;
+	Create the staysure database
+		create database staysure default character set utf8;
+
+Setting up the Jboss
+--------------------------------
+	Create a duplicate copy of your JBOSS_HOME/server/default directory and rename it as redesign
+	Remove unrelated war files in JBOSS_HOME/server/redesign/deploy directory
+
+Building the project
+--------------------------------
+	Execute the following command from intersureplus project root to build and create the staysure-aggregator.war file
+		./gradlew clean :staysure-aggregator:build
+	Copy the generated war file to JBOSS_HOME/server/redesign/deploy directory
+
+Starting up the Jboss instance 
+--------------------------------
+	Execute the following command from JBOSS_HOME/bin directory to start up the Jboss server
+		sh run.sh -c redesign
+
+Verifying
+--------------------------------
+	Access the following url from web browser and verify whether a new quote gets inserted to the t_quote table in data base
+		https://localhost:8443/staysure-aggregator/newQuote  
