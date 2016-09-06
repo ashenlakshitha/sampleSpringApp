@@ -1,0 +1,14 @@
+bin
+build
+.gradle
+.sonar
+.settings
+.classpath
+.project
+coverage
+*.iml
+*.ipr
+*.iws
+.idea
+classes
+h2-test-db
